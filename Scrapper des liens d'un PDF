@@ -1,0 +1,58 @@
+Installe :
+```bash
+cd "SET_WD"
+python3 -m pip install pymupdf
+```
+Crée :
+```bash
+nano extraire_liens_pdf.py
+```
+Colle :
+```python
+import fitz
+import os
+import re
+
+PDF_DIR = "pdf_recherche"
+OUTPUT_FILE = "tous_les_liens.txt"
+
+os.makedirs(PDF_DIR, exist_ok=True)
+
+all_links = set()
+
+for filename in os.listdir(PDF_DIR):
+    if not filename.lower().endswith(".pdf"):
+        continue
+
+    path = os.path.join(PDF_DIR, filename)
+    doc = fitz.open(path)
+
+    for page in doc:
+        for link in page.get_links():
+            if "uri" in link:
+                all_links.add(link["uri"])
+
+        text = page.get_text()
+        urls = re.findall(r"https?://[^\s\]\)\}>\"']+", text)
+        all_links.update(urls)
+
+with open(OUTPUT_FILE, "w", encoding="utf-8") as f:
+    for url in sorted(all_links):
+        f.write(url + "\n")
+
+print("Liens trouvés :", len(all_links))
+print("Fichier créé :", OUTPUT_FILE)
+
+```
+Mets tes PDF dans un dossier :
+
+```bash
+mkdir pdf_recherche
+```
+
+Puis lance :
+
+```bash
+cd "/Users/evamontford/Scraping Python"
+python3 extraire_liens.py
+```
