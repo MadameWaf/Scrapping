@@ -1,0 +1,88 @@
+Installe :
+```bash
+cd "SET_WD"
+python3 -m pip install trafilatura requests
+```
+Crée :
+```bash
+nano scraper_textes.py
+```
+Colle :
+```python
+import os
+import re
+import requests
+import trafilatura
+from urllib.parse import urlparse
+
+INPUT_FILE = "tous_les_liens.txt"
+OUTPUT_DIR = "textes_pages"
+
+os.makedirs(OUTPUT_DIR, exist_ok=True)
+
+headers = {
+    "User-Agent": "Mozilla/5.0"
+}
+
+def safe_filename(url):
+    parsed = urlparse(url)
+    name = parsed.netloc + parsed.path
+    name = re.sub(r"[^a-zA-Z0-9_-]+", "_", name)
+    return name[:150] + ".txt"
+
+with open(INPUT_FILE, encoding="utf-8") as f:
+    urls = [line.strip() for line in f if line.strip().startswith("http")]
+
+urls = list(dict.fromkeys(urls))
+
+print("URLs à scraper :", len(urls))
+
+success = 0
+failed = 0
+
+for i, url in enumerate(urls, start=1):
+    print(f"\n[{i}/{len(urls)}] {url}")
+
+    try:
+        r = requests.get(url, headers=headers, timeout=30)
+        html = r.text
+
+        text = trafilatura.extract(
+            html,
+            url=url,
+            include_comments=False,
+            include_tables=True
+        )
+
+        if not text or len(text.strip()) < 100:
+            print("Texte vide ou insuffisant")
+            failed += 1
+            continue
+
+        filename = safe_filename(url)
+        path = os.path.join(OUTPUT_DIR, filename)
+
+        with open(path, "w", encoding="utf-8") as f:
+            f.write("URL: " + url + "\n\n")
+            f.write(text)
+
+        print("Sauvé :", filename)
+        success += 1
+
+    except Exception as e:
+        print("Erreur :", e)
+        failed += 1
+
+print("\nTerminé")
+print("Succès :", success)
+print("Échecs :", failed)
+```
+Lance :
+```bash
+cd "/Users/evamontford/Scraping Python"
+python3 scraper_textes.py
+```
+Les textes seront dans :
+```text
+textes_pages/
+```
