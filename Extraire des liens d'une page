@@ -1,0 +1,58 @@
+```
+## 1. Extraire tous les liens d’une page de recherche
+
+Installe les modules :
+
+```bash
+cd "NOM_DU_WORKING_DIRECTORY"
+python3 -m pip install requests beautifulsoup4
+```
+
+Crée un fichier :
+
+```bash
+nano extraire_liens.py
+
+```
+Colle :
+
+```python
+import requests
+from bs4 import BeautifulSoup
+from urllib.parse import urljoin
+import re
+
+RESULTS_URL = "COLLE_ICI_L_URL_DE_TA_PAGE_DE_RECHERCHE"
+OUTPUT_FILE = "tous_les_liens.txt"
+
+headers = {
+    "User-Agent": "Mozilla/5.0"
+}
+
+html = requests.get(RESULTS_URL, headers=headers, timeout=30).text
+soup = BeautifulSoup(html, "html.parser")
+
+links = []
+
+for a in soup.find_all("a", href=True):
+    url = urljoin(RESULTS_URL, a["href"])
+
+    if url.startswith("http"):
+        links.append(url)
+
+links = list(dict.fromkeys(links))
+
+with open(OUTPUT_FILE, "w", encoding="utf-8") as f:
+    for link in links:
+        f.write(link + "\n")
+
+print("Liens trouvés :", len(links))
+print("Fichier créé :", OUTPUT_FILE)
+```
+
+Lancer :
+
+```bash
+python3 extraire_liens.py
+```
+
